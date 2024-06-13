@@ -147,6 +147,13 @@ int stop_nebula_session(nebula_data* nebula, guac_user* user, char* hostname) {
     /* Prints some info. */
     guac_user_log(user, GUAC_LOG_INFO,
                     "Stopping nebula session: %d", nebula->session_id);
+
+    /* Resets SIGCHLD (force automatic removal of children) */
+    if (signal(SIGCHLD, SIG_DFL) == SIG_ERR) {
+        guac_user_log(user, GUAC_LOG_ERROR, "Could not set handler for SIGCHLD to default. "
+                "Nebula data cannot be collected.");
+        return 1;
+    }
     
     /* Forks to execute nebula session stop. */
     pid_t stop_pid = fork();
@@ -165,6 +172,20 @@ int stop_nebula_session(nebula_data* nebula, guac_user* user, char* hostname) {
     } else if (stop_pid < 0)
         /* Fork failed. Exit. */
         return 1;
+
+    /* Waits for nebula stop to terminate. This is required because nebula-stop can be
+       forcibly terminated by guacd before ending it's execution */
+    if(waitpid(stop_pid, NULL, 0) == -1) {
+        /* Waitpid fails */
+        perror("waitpid");
+        return 1;
+    }
+
+    /* Ignore SIGCHLD (force automatic removal of children) */
+    if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
+        guac_user_log(user, GUAC_LOG_INFO, "Could not set handler for SIGCHLD to ignore. "
+                "Child processes may pile up in the process table.");
+    }
 
     return 0;
 }
