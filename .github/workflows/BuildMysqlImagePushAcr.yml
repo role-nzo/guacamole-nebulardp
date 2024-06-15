@@ -2,7 +2,11 @@ name: Build Mysql Container Image and Push to ACR
 
 on:
   workflow_dispatch:
-
+#on:
+#  push:
+#  	paths:
+#    - 'dump/**'
+#    - 'bin/mysql/**'
 jobs:
   build:
     runs-on: ubuntu-latest
