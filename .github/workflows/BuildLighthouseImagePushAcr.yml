@@ -1,0 +1,22 @@
+name: Build Lighthouse Container Image and Push to ACR
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./
+    steps:
+    - uses: actions/checkout@v2
+    - uses: azure/docker-login@v1
+      with:
+        login-server: ${{ secrets.REGISTRY_NAME }}
+        username: ${{ secrets.REGISTRY_USERNAME }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+    - run: |
+        docker build . -t ${{ secrets.REGISTRY_NAME }}/lighthouse:${{ github.sha }} -f Dockerfile-lighthouse
+        docker push ${{ secrets.REGISTRY_NAME }}/lighthouse:${{ github.sha }}
