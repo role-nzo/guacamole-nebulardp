@@ -2,7 +2,10 @@ name: Build RdpHost Container Image and Push to ACR
 
 on:
   workflow_dispatch:
-
+#on:
+#  push:
+#  	paths:
+#    - 'config/nebula/rdphost/**'
 jobs:
   build:
     runs-on: ubuntu-latest
