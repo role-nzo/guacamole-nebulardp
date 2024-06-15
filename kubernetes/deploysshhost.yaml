@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sshhost-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sshhost
+  template:
+    metadata:
+      labels:
+        app: sshhost
+    spec:
+      containers:
+      - name: sshhost-container
+        image:  "docker.io/devrols/sshhost-nebula:0.0.5"
+        env:
+        - name: PASSWORD_ACCESS
+          value: "true"
+        - name: USER_NAME
+          value: "abc"
+        - name: USER_PASSWORD
+          value: "abc"
+        volumeMounts:
+        - name: sshhost-config
+          mountPath: /etc/nebula/common/ca.crt
+          subPath: ca.crt
+        - name: sshhost-config
+          mountPath: /etc/nebula/config.sshhost.yml
+          subPath: config.sshhost.yml
+        - name: sshhost-config
+          mountPath: /etc/nebula/sshhost.key
+          subPath: sshhost.key
+        - name: sshhost-config
+          mountPath: /etc/nebula/sshhost.crt
+          subPath: sshhost.crt
+        securityContext:
+          privileged: true
+        ports:
+        - containerPort: 2222
+        - containerPort: 4242
+          protocol: UDP
+      volumes:
+      - name: sshhost-config
+        configMap:
+          name: sshhost-config
+          items:
+            - key: sshhost.crt
+              path: sshhost.crt
+            - key: config.sshhost.yml
+              path: config.sshhost.yml
+            - key: sshhost.key
+              path: sshhost.key
+            - key: ca.crt
+              path: ca.crt
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: sshhost-ssh-lb
+spec:
+  selector:
+    app: sshhost
+  ports:
+    - name: guacaport 
+      port: 2222
+  type: LoadBalancer
+
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: sshhost-nebula-lb
+spec:
+  selector:
+    app: sshhost
+  ports:
+    - name: lightport
+      protocol: UDP
+      port: 4242
+  allocateLoadBalancerNodePorts: false
+  type: LoadBalancer

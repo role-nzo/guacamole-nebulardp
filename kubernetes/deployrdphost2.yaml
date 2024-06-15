@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rdphost2-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rdphost2
+  template:
+    metadata:
+      labels:
+        app: rdphost2
+    spec:
+      containers:
+      - name: rdphost2-container
+        image:  "docker.io/devrols/rdphost-nebula:0.0.5"
+        volumeMounts:
+        - name: rdphost2-config
+          mountPath: /etc/nebula/common/ca.crt
+          subPath: ca.crt
+        - name: rdphost2-config
+          mountPath: /etc/nebula/config.rdphost.yml
+          subPath: config.rdphost.yml
+        - name: rdphost2-config
+          mountPath: /etc/nebula/rdphost.key
+          subPath: rdphost.key
+        - name: rdphost2-config
+          mountPath: /etc/nebula/rdphost.crt
+          subPath: rdphost.crt
+        securityContext:
+          privileged: true
+        ports:
+        - containerPort: 3389
+        - containerPort: 4242
+          protocol: UDP
+      volumes:
+      - name: rdphost2-config
+        configMap:
+          name: rdphost2-config
+          items:
+            - key: rdphost.crt
+              path: rdphost.crt
+            - key: config.rdphost.yml
+              path: config.rdphost.yml
+            - key: rdphost.key
+              path: rdphost.key
+            - key: ca.crt
+              path: ca.crt
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: rdphost2-rdp-lb
+spec:
+  selector:
+    app: rdphost2
+  ports:
+    - name: guacaport 
+      port: 3389
+  type: LoadBalancer
+
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: rdphost2-nebula-lb
+spec:
+  selector:
+    app: rdphost2
+  ports:
+    - name: lightport
+      protocol: UDP
+      port: 4242
+  allocateLoadBalancerNodePorts: false
+  type: LoadBalancer

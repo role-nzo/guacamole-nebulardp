@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: guacamole-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: guacamole
+  template:
+    metadata:
+      labels:
+        app: guacamole
+    spec:
+      containers:
+      - name: guacamole-container
+        image:  "docker.io/guacamole/guacamole"
+        env:
+        - name: MYSQL_HOSTNAME
+          value: "10.1.0.3"
+        - name: MYSQL_DATABASE
+          value: "guacamole_db"
+        - name:  MYSQL_USER
+          value: "root"
+        - name: MYSQL_PASSWORD
+          value: "root"
+        - name: GUACD_HOSTNAME
+          value: "10.1.0.2"
+        securityContext:
+          privileged: true
+        ports:
+        - containerPort: 8080
+
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: loadbalancer-guaca
+spec:
+  selector:
+    app: guacamole
+  ports:
+    -  port: 80
+       targetPort: 8080
+  type: LoadBalancer
