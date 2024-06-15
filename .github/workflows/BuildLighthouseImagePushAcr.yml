@@ -2,6 +2,11 @@ name: Build Lighthouse Container Image and Push to ACR
 
 on:
   workflow_dispatch:
+#on:
+#  push:
+#  	paths:
+#    - 'config/nebula/lighthouse/**'
+
 
 jobs:
   build:
